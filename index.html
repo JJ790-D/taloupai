@@ -1,0 +1,614 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,viewport-fit=cover">
+<meta name="theme-color" content="#0b0818">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<title>今日食签 · 翻牌决定这一餐</title>
+<style>
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+html,body{margin:0;padding:0;min-height:100%}
+body{
+  --bg1:#1d1436;--bg2:#0b0818;--card:rgba(41,30,68,.72);--card2:rgba(58,43,92,.55);
+  --accent:#d4af6a;--accent2:#f2dfae;--text:#f6efff;--sub:rgba(246,239,255,.6);
+  --line:rgba(212,175,106,.28);--shadow:rgba(0,0,0,.42);
+  --face1:#f7eed7;--face2:#e4cea0;--faceText:#3a2a4f;
+  font-family:-apple-system,BlinkMacSystemFont,"PingFang SC","Noto Sans SC","Microsoft YaHei",sans-serif;
+  color:var(--text);background:var(--bg2);-webkit-font-smoothing:antialiased;
+  transition:color .25s;
+}
+body[data-theme="cream"]{--bg1:#fff5e6;--bg2:#f2ddc2;--card:rgba(255,255,255,.86);--card2:rgba(255,247,235,.85);--accent:#d9814b;--accent2:#a9552c;--text:#4a3527;--sub:rgba(74,53,39,.62);--line:rgba(217,129,75,.3);--shadow:rgba(120,80,40,.16);--face1:#fffaf0;--face2:#f6e0c4;--faceText:#5a3b27}
+body[data-theme="fresh"]{--bg1:#eef9f3;--bg2:#d8ecdf;--card:rgba(255,255,255,.9);--card2:rgba(243,252,247,.88);--accent:#2e9e78;--accent2:#166b50;--text:#1f3a30;--sub:rgba(31,58,48,.62);--line:rgba(46,158,120,.3);--shadow:rgba(30,90,70,.14);--face1:#f7fffa;--face2:#d9f0e2;--faceText:#1e4a37}
+body[data-theme="china"]{--bg1:#f4ecdd;--bg2:#e0d0b3;--card:rgba(255,251,242,.9);--card2:rgba(250,242,228,.9);--accent:#b3382c;--accent2:#8a251c;--text:#3a2b22;--sub:rgba(58,43,34,.64);--line:rgba(179,56,44,.3);--shadow:rgba(80,50,30,.16);--face1:#fdf7ea;--face2:#ead9b8;--faceText:#5a2a20}
+body.with-bg{--text:#fff;--sub:rgba(255,255,255,.74);--card:rgba(22,16,38,.62);--card2:rgba(22,16,38,.46);--line:rgba(255,255,255,.24)}
+.bg{position:fixed;inset:0;z-index:-2;background:linear-gradient(165deg,var(--bg1) 0%,var(--bg2) 78%);background-size:cover;background-position:center;transition:background-image .3s}
+.bg::after{content:"";position:absolute;inset:0;opacity:0;background-image:radial-gradient(1.5px 1.5px at 12% 18%,#fff 40%,transparent 42%),radial-gradient(1.5px 1.5px at 78% 12%,#fff 40%,transparent 42%),radial-gradient(1px 1px at 32% 42%,#fff 40%,transparent 42%),radial-gradient(1px 1px at 88% 55%,#fff 40%,transparent 42%),radial-gradient(1.5px 1.5px at 18% 72%,#fff 40%,transparent 42%),radial-gradient(1px 1px at 62% 82%,#fff 40%,transparent 42%),radial-gradient(1px 1px at 48% 25%,#fff 40%,transparent 42%),radial-gradient(1px 1px at 92% 88%,#fff 40%,transparent 42%);transition:opacity .3s}
+body[data-theme="mystic"] .bg::after{opacity:.55}
+.veil{position:fixed;inset:0;z-index:-1;background:linear-gradient(180deg,rgba(8,6,18,.72),rgba(8,6,18,.94));opacity:0;pointer-events:none;transition:opacity .25s}
+.wrap{max-width:480px;margin:0 auto;padding:0 18px calc(108px + env(safe-area-inset-bottom));min-height:100vh}
+header{padding:calc(24px + env(safe-area-inset-top)) 2px 18px;display:flex;align-items:flex-end;justify-content:space-between;gap:10px}
+header h1{margin:0;font-size:26px;letter-spacing:2px;font-weight:600;font-family:"Songti SC","Noto Serif SC",Georgia,serif}
+header .sub{margin:5px 0 0;font-size:12px;color:var(--sub);letter-spacing:.5px}
+header .mark{font-size:24px;color:var(--accent);opacity:.9;padding-bottom:2px}
+.card{background:var(--card);border:1px solid var(--line);border-radius:20px;padding:16px;box-shadow:0 10px 30px var(--shadow);backdrop-filter:blur(14px);-webkit-backdrop-filter:blur(14px);margin-bottom:14px}
+.sec{display:flex;align-items:center;justify-content:space-between;margin:20px 2px 10px}
+.sec h2{margin:0;font-size:14px;font-weight:600;letter-spacing:1px}
+.sec .link{border:0;background:none;color:var(--accent);font-size:12px;padding:4px 0;cursor:pointer}
+.hero{position:relative;border-radius:22px;padding:22px 16px 20px;text-align:center;background:var(--card);border:1px solid var(--line);box-shadow:0 14px 40px var(--shadow);backdrop-filter:blur(14px);-webkit-backdrop-filter:blur(14px);margin-bottom:18px;overflow:hidden}
+.hero::before{content:"";position:absolute;width:260px;height:260px;left:50%;top:-150px;transform:translateX(-50%);background:radial-gradient(circle,var(--accent) 0%,transparent 68%);opacity:.16;pointer-events:none}
+.hero .mini{width:76px;height:112px;margin:0 auto 14px;border-radius:12px;overflow:hidden;box-shadow:0 8px 24px rgba(0,0,0,.4);transform:rotate(-6deg)}
+.hero .mini svg{width:100%;height:100%;display:block}
+.hero h3{margin:0 0 6px;font-size:17px;letter-spacing:1px;font-family:"Songti SC","Noto Serif SC",serif}
+.hero p{margin:0;font-size:12px;color:var(--sub);line-height:1.7}
+.q-block{margin-bottom:14px}
+.q-title{font-size:13px;margin:0 0 9px;color:var(--text);display:flex;align-items:center;gap:6px}
+.q-title .dot{width:5px;height:5px;border-radius:50%;background:var(--accent);flex:none}
+.chips{display:flex;flex-wrap:wrap;gap:8px}
+.chip{border:1px solid var(--line);background:var(--card2);color:var(--sub);border-radius:999px;padding:8px 13px;font-size:12px;cursor:pointer;transition:.2s;line-height:1}
+.chip.on{background:var(--accent);border-color:var(--accent);color:#2a1d3f;font-weight:600;box-shadow:0 4px 14px rgba(0,0,0,.18)}
+body[data-theme="fresh"] .chip.on,body[data-theme="china"] .chip.on,body[data-theme="cream"] .chip.on{color:#fff}
+.match{font-size:12px;color:var(--sub);text-align:center;margin:18px 0 12px}
+.match b{color:var(--accent);font-size:16px}
+.btn{display:block;width:100%;border:0;border-radius:14px;padding:14px;font-size:15px;font-weight:600;letter-spacing:1px;cursor:pointer;transition:.2s;font-family:inherit}
+.btn.primary{background:linear-gradient(135deg,var(--accent2),var(--accent));color:#2a1d3f;box-shadow:0 8px 22px rgba(0,0,0,.24)}
+body[data-theme="fresh"] .btn.primary,body[data-theme="china"] .btn.primary,body[data-theme="cream"] .btn.primary{color:#fff}
+.btn:active{transform:translateY(1px)}
+.btn.ghost{background:var(--card2);border:1px solid var(--line);color:var(--text);font-weight:500;box-shadow:none}
+.btn.small{padding:11px;font-size:13px;margin-top:10px}
+.btn.danger{background:transparent;border:1px solid rgba(220,80,80,.5);color:#e88}
+.row2{display:flex;gap:10px;margin-top:10px}
+.row2 .btn{margin-top:0;flex:1}
+.hint{text-align:center;font-size:11px;color:var(--sub);margin:12px 0 0;line-height:1.7}
+.cards{display:grid;gap:10px;margin:6px 0 16px;justify-content:center}
+.cards[data-count="3"]{grid-template-columns:repeat(3,minmax(0,1fr));max-width:340px;margin-left:auto;margin-right:auto}
+.cards[data-count="4"]{grid-template-columns:repeat(4,minmax(0,1fr))}
+.cards[data-count="5"]{grid-template-columns:repeat(5,minmax(0,1fr));gap:7px}
+.flip{aspect-ratio:2/3;perspective:900px;cursor:pointer;transition:opacity .35s,transform .35s}
+.flip-inner{position:relative;width:100%;height:100%;transform-style:preserve-3d;transition:transform .72s cubic-bezier(.2,.8,.2,1)}
+.flip.is-flipped .flip-inner{transform:rotateY(180deg)}
+.face{position:absolute;inset:0;border-radius:13px;overflow:hidden;backface-visibility:hidden;-webkit-backface-visibility:hidden;border:1px solid var(--line);box-shadow:0 8px 20px rgba(0,0,0,.3)}
+.face.back{background:linear-gradient(150deg,#2b1c50,#140d2c);border-color:rgba(212,175,106,.55);padding:5px}
+.face.back svg{width:100%;height:100%;display:block}
+.face.front{transform:rotateY(180deg);background:linear-gradient(160deg,var(--face1),var(--face2));color:var(--faceText);display:flex;flex-direction:column;align-items:center;justify-content:center;padding:6px;text-align:center;border-color:var(--accent)}
+.face.front .em{font-size:30px;line-height:1.2}
+.face.front .nm{font-size:12px;font-weight:700;margin-top:5px;line-height:1.25;word-break:break-all}
+.face.front .tg{font-size:9px;opacity:.7;margin-top:4px;line-height:1.3}
+.cards[data-count="5"] .face.front .em{font-size:20px}
+.cards[data-count="5"] .face.front .nm{font-size:9px}
+.cards[data-count="5"] .face.front .tg{display:none}
+.cards[data-count="4"] .face.front .em{font-size:24px}
+.flip.dimmed{opacity:.22;transform:scale(.9);pointer-events:none}
+.flip.picked{transform:scale(1.06);z-index:2}
+.result{text-align:center;padding:20px 16px;background:var(--card);border:1px solid var(--accent);border-radius:20px;box-shadow:0 10px 34px var(--shadow);margin-bottom:14px;animation:rise .45s ease-out}
+@keyframes rise{from{opacity:0;transform:translateY(14px)}to{opacity:1;transform:none}}
+.result .big{font-size:52px;line-height:1.1}
+.result h3{margin:8px 0 6px;font-size:22px;letter-spacing:2px;font-family:"Songti SC","Noto Serif SC",serif}
+.result .tags{display:flex;flex-wrap:wrap;gap:6px;justify-content:center;margin:10px 0}
+.result .tags span{font-size:11px;border:1px solid var(--line);border-radius:999px;padding:4px 9px;color:var(--sub)}
+.result .note{font-size:12px;color:var(--sub);line-height:1.6;margin:6px 0 0}
+.rows{display:flex;flex-direction:column;gap:10px}
+.item{display:flex;align-items:center;gap:11px;background:var(--card);border:1px solid var(--line);border-radius:15px;padding:12px;box-shadow:0 6px 18px var(--shadow)}
+.item .ic{width:40px;height:40px;border-radius:11px;background:var(--card2);display:flex;align-items:center;justify-content:center;font-size:22px;flex:none;border:1px solid var(--line)}
+.item .tx{flex:1;min-width:0}
+.item .tx b{display:block;font-size:14px;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.item .tx small{display:block;font-size:11px;color:var(--sub);margin-top:4px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.item .ops{display:flex;gap:6px;flex:none}
+.iconbtn{width:30px;height:30px;border-radius:9px;border:1px solid var(--line);background:var(--card2);color:var(--sub);font-size:13px;display:flex;align-items:center;justify-content:center;cursor:pointer;line-height:1}
+.iconbtn.on{color:var(--accent);border-color:var(--accent)}
+.iconbtn.del{color:#e88}
+.search{width:100%;border:1px solid var(--line);background:var(--card);color:var(--text);border-radius:12px;padding:11px 13px;font-size:13px;outline:none;margin-bottom:12px;font-family:inherit}
+.search::placeholder{color:var(--sub)}
+.subtabs{display:flex;gap:8px;margin-bottom:14px}
+.subtabs button{flex:1;border:1px solid var(--line);background:var(--card);color:var(--sub);border-radius:12px;padding:10px;font-size:13px;cursor:pointer;font-family:inherit}
+.subtabs button.on{background:var(--accent);border-color:var(--accent);color:#2a1d3f;font-weight:600}
+body[data-theme="fresh"] .subtabs button.on,body[data-theme="china"] .subtabs button.on,body[data-theme="cream"] .subtabs button.on{color:#fff}
+.group{font-size:11px;color:var(--sub);margin:16px 2px 8px;letter-spacing:1px}
+.empty{text-align:center;padding:32px 16px;color:var(--sub);font-size:13px;line-height:1.8}
+.empty .e{font-size:34px;display:block;margin-bottom:8px;opacity:.75}
+.field{margin-bottom:14px}
+.field label{display:block;font-size:12px;color:var(--sub);margin-bottom:7px}
+.field input,.field textarea,.field select{width:100%;border:1px solid var(--line);background:var(--card2);color:var(--text);border-radius:11px;padding:11px 12px;font-size:14px;outline:none;font-family:inherit}
+.field textarea{resize:vertical;min-height:62px;line-height:1.5}
+.field input:focus,.field textarea:focus,.field select:focus{border-color:var(--accent)}
+.field select option{background:#2a1d3f;color:#fff}
+.field .tip{font-size:11px;color:var(--sub);margin-top:6px;line-height:1.6}
+.grid2{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.swatches{display:flex;gap:9px;flex-wrap:wrap}
+.sw{width:44px;height:44px;border-radius:13px;border:2px solid transparent;cursor:pointer;position:relative;overflow:hidden}
+.sw.on{border-color:var(--text);box-shadow:0 0 0 2px var(--card)}
+.sw span{position:absolute;bottom:0;left:0;right:0;font-size:8px;text-align:center;background:rgba(0,0,0,.42);color:#fff;padding:2px 0}
+.colors{display:flex;gap:9px;align-items:center;flex-wrap:wrap;margin-top:10px}
+.cdot{width:30px;height:30px;border-radius:50%;border:2px solid transparent;cursor:pointer}
+.cdot.on{border-color:var(--text)}
+input[type=color]{width:34px;height:34px;padding:0;border:1px solid var(--line);border-radius:50%;background:none;cursor:pointer;overflow:hidden}
+.setrow{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:11px 0;border-bottom:1px solid var(--line)}
+.setrow:last-child{border-bottom:0}
+.setrow .l b{display:block;font-size:13px;font-weight:600}
+.setrow .l small{display:block;font-size:11px;color:var(--sub);margin-top:3px;line-height:1.5}
+.switch{width:46px;height:26px;border-radius:99px;border:1px solid var(--line);background:var(--card2);position:relative;cursor:pointer;flex:none;transition:.2s}
+.switch::after{content:"";position:absolute;top:3px;left:3px;width:18px;height:18px;border-radius:50%;background:var(--sub);transition:.2s}
+.switch.on{background:var(--accent);border-color:var(--accent)}
+.switch.on::after{left:23px;background:#fff}
+.setrow select,.setrow input[type=text]{border:1px solid var(--line);background:var(--card2);color:var(--text);border-radius:9px;padding:7px 9px;font-size:12px;outline:none;font-family:inherit;max-width:150px}
+input[type=range]{width:150px;accent-color:var(--accent)}
+.tabs{position:fixed;bottom:0;left:50%;transform:translateX(-50%);width:100%;max-width:480px;display:flex;background:var(--bg2);border-top:1px solid var(--line);box-shadow:0 -8px 26px var(--shadow);padding:8px 6px calc(8px + env(safe-area-inset-bottom));z-index:20}
+.tabs button{flex:1;border:0;background:none;color:var(--sub);font-size:10px;display:flex;flex-direction:column;align-items:center;gap:3px;padding:5px 0;cursor:pointer;font-family:inherit}
+.tabs button i{font-style:normal;font-size:20px;line-height:1.2;opacity:.72;transition:.2s}
+.tabs button.on{color:var(--accent);font-weight:600}
+.tabs button.on i{opacity:1;transform:translateY(-1px)}
+.mask{position:fixed;inset:0;background:rgba(0,0,0,.55);z-index:30;opacity:0;pointer-events:none;transition:opacity .25s}
+.mask.open{opacity:1;pointer-events:auto}
+.sheet{position:fixed;left:50%;bottom:0;transform:translate(-50%,100%);width:100%;max-width:480px;max-height:84vh;background:var(--bg2);border:1px solid var(--line);border-bottom:0;border-radius:24px 24px 0 0;z-index:31;transition:transform .3s cubic-bezier(.2,.8,.2,1);display:flex;flex-direction:column;box-shadow:0 -14px 40px rgba(0,0,0,.4)}
+.sheet.open{transform:translate(-50%,0)}
+.sheet-head{display:flex;align-items:center;justify-content:space-between;padding:18px 18px 12px;border-bottom:1px solid var(--line)}
+.sheet-head h3{margin:0;font-size:16px;letter-spacing:1px}
+.sheet-head button{border:0;background:var(--card2);color:var(--sub);width:28px;height:28px;border-radius:9px;cursor:pointer;font-size:13px}
+.sheet-body{padding:16px 18px;overflow-y:auto;flex:1;-webkit-overflow-scrolling:touch}
+.sheet-foot{padding:12px 18px calc(18px + env(safe-area-inset-bottom));border-top:1px solid var(--line)}
+.qedit{border:1px solid var(--line);border-radius:14px;padding:12px;margin-bottom:12px;background:var(--card)}
+.qedit .top{display:flex;gap:8px;align-items:center;margin-bottom:9px}
+.qedit .top input{flex:1}
+.qedit .top button{width:30px;height:34px;border:1px solid var(--line);background:var(--card2);color:#e88;border-radius:9px;cursor:pointer;flex:none}
+.toast{position:fixed;left:50%;bottom:calc(90px + env(safe-area-inset-bottom));transform:translate(-50%,10px);background:rgba(20,14,36,.94);color:#fff;border:1px solid var(--accent);border-radius:999px;padding:10px 18px;font-size:12px;z-index:50;opacity:0;pointer-events:none;transition:.25s;white-space:nowrap;max-width:90vw;overflow:hidden;text-overflow:ellipsis}
+.toast.show{opacity:1;transform:translate(-50%,0)}
+</style>
+</head>
+<body data-theme="mystic">
+<div class="bg" id="bg"></div>
+<div class="veil" id="veil"></div>
+<div class="wrap">
+  <header id="hdr"></header>
+  <main id="main"></main>
+</div>
+<nav class="tabs" id="tabs"></nav>
+<div class="mask" id="mask"></div>
+<section class="sheet" id="sheet"></section>
+<div class="toast" id="toast"></div>
+<input type="file" id="file-bg" accept="image/*" hidden>
+<input type="file" id="file-import" accept="application/json,.json" hidden>
+<script>
+(function(){
+'use strict';
+var KEY='lunch_tarot_v1', ANY='不限';
+var THEMES=[
+  {id:'mystic',name:'紫金夜色',accent:'#d4af6a',sw:'linear-gradient(140deg,#2b1c50,#0b0818)'},
+  {id:'cream',name:'奶油手帐',accent:'#d9814b',sw:'linear-gradient(140deg,#fff5e6,#f2ddc2)'},
+  {id:'fresh',name:'清爽白绿',accent:'#2e9e78',sw:'linear-gradient(140deg,#eef9f3,#c9e7d6)'},
+  {id:'china',name:'国风朱砂',accent:'#b3382c',sw:'linear-gradient(140deg,#f4ecdd,#d9b98a)'}
+];
+var ACCENTS=['#d4af6a','#e0a3c8','#8fb8f0','#7fd1b9','#e88b6a','#b9a4ef'];
+var TABS=[['draw','🔮','抽牌'],['deck','🃏','牌库'],['log','📖','记录'],['me','✨','美化']];
+
+function uid(){return Date.now().toString(36)+Math.random().toString(36).slice(2,7)}
+function today(){var d=new Date();return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0')}
+function prettyDate(s){var p=String(s||'').split('-');if(p.length<3)return s||'';var w=['日','一','二','三','四','五','六'];var d=new Date(+p[0],+p[1]-1,+p[2]);return (+p[1])+'月'+(+p[2])+'日 · 周'+w[d.getDay()]}
+function esc(s){return String(s==null?'':s).replace(/[&<>"']/g,function(m){return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m]})}
+function val(id){var e=document.getElementById(id);return e?e.value:''}
+function shuffle(a){for(var i=a.length-1;i>0;i--){var j=Math.floor(Math.random()*(i+1));var t=a[i];a[i]=a[j];a[j]=t}return a}
+
+function defTags(){var t={};DEFAULT_DIMENSIONS.forEach(function(d){t[d.id]=ANY});return t}
+function presetCards(){
+  var raw=[
+    ['🍜','红烧牛肉面','15分钟内','香辣','面食','楼下面馆那家，加个卤蛋'],
+    ['🍚','卤肉饭','15分钟内','浓郁','米饭','米饭拌酱汁最香'],
+    ['🥗','轻食沙拉','15分钟内','清淡','轻食','吃完下午不犯困'],
+    ['🍲','麻辣烫','30分钟内','香辣','汤锅','多放蔬菜少放丸子'],
+    ['🍱','日式便当','15分钟内','鲜香','米饭','有玉子烧就选它'],
+    ['🥟','猪肉白菜饺','15分钟内','鲜香','小吃','蘸醋加一点辣油'],
+    ['🍛','咖喱鸡饭','30分钟内','浓郁','米饭','微辣版更下饭'],
+    ['🍣','三文鱼寿司','15分钟内','清淡','米饭','清爽不油腻'],
+    ['🍝','番茄肉酱意面','30分钟内','酸甜','面食','撒帕玛森芝士'],
+    ['🌶️','酸辣粉','15分钟内','香辣','面食','酸要够，粉要弹'],
+    ['🥘','黄焖鸡米饭','30分钟内','浓郁','米饭','加一份香菇'],
+    ['🍢','关东煮','15分钟内','清淡','汤锅','萝卜和昆布汤必点'],
+    ['🥪','火腿芝士三明治','15分钟内','清淡','轻食','配一杯冰美式'],
+    ['🍗','炸鸡汉堡','15分钟内','浓郁','小吃','放纵一下也无妨'],
+    ['🥟','粤式虾饺','30分钟内','鲜香','小吃','配一笼烧卖'],
+    ['🍚','蛋炒饭','15分钟内','鲜香','米饭','粒粒分明那种'],
+    ['🍜','螺蛳粉','30分钟内','香辣','面食','记得开窗'],
+    ['🥣','皮蛋瘦肉粥','15分钟内','清淡','汤锅','胃不舒服时首选'],
+    ['🍖','炭烤五花肉饭','慢慢吃','浓郁','米饭','留够一小时'],
+    ['🍲','小火锅','慢慢吃','香辣','汤锅','一个人也要好好吃'],
+    ['🍤','冬阴功海鲜面','慢慢吃','酸甜','面食','酸辣开胃'],
+    ['🥩','牛排套餐','慢慢吃','鲜香','轻食','纪念日借口']
+  ];
+  return raw.map(function(r){return {id:uid(),name:r[1],emoji:r[0],note:r[5],tags:{time:r[2],taste:r[3],type:r[4]},enabled:true}});
+}
+var DEFAULT_DIMENSIONS=[
+  {id:'time',name:'希望用时多久？',options:[ANY,'15分钟内','30分钟内','慢慢吃']},
+  {id:'taste',name:'想吃什么味道？',options:[ANY,'清淡','香辣','酸甜','浓郁','鲜香']},
+  {id:'type',name:'今天想吃哪一类？',options:[ANY,'米饭','面食','汤锅','轻食','小吃']}
+];
+function defaults(){
+  return {
+    version:1,
+    settings:{theme:'mystic',accent:'#d4af6a',title:'今日食签',bgImage:null,overlay:.55,sound:true,cardCount:3,avoidRecent:true,avoidDays:3},
+    dimensions:JSON.parse(JSON.stringify(DEFAULT_DIMENSIONS)),
+    answers:{},cards:presetCards(),meals:[],wishes:[]
+  };
+}
+function normalize(d){
+  var def=defaults();
+  if(!d||typeof d!=='object')return def;
+  var out={
+    version:1,
+    settings:Object.assign({},def.settings,d.settings||{}),
+    dimensions:Array.isArray(d.dimensions)&&d.dimensions.length?d.dimensions.map(function(x,i){
+      var opts=Array.isArray(x.options)&&x.options.length?x.options.slice():[ANY,'选项A','选项B'];
+      if(opts[0]!==ANY)opts.unshift(ANY);
+      return {id:String(x.id||('d'+i)),name:String(x.name||'未命名问题'),options:opts};
+    }):def.dimensions,
+    answers:Object.assign({},d.answers||{}),
+    cards:Array.isArray(d.cards)?d.cards.map(function(c){return{id:String(c.id||uid()),name:String(c.name||'未命名'),emoji:String(c.emoji||'🍽️'),note:String(c.note||''),tags:Object.assign({},c.tags||{}),enabled:c.enabled!==false}}):def.cards,
+    meals:Array.isArray(d.meals)?d.meals:[],
+    wishes:Array.isArray(d.wishes)?d.wishes:[]
+  };
+  return out;
+}
+var S=(function(){try{var r=localStorage.getItem(KEY);return r?normalize(JSON.parse(r)):defaults()}catch(e){return defaults()}})();
+var state={tab:'draw',phase:'idle',drawCards:[],picked:null,deckSearch:'',logTab:'meals',editing:null};
+function save(){try{localStorage.setItem(KEY,JSON.stringify(S))}catch(e){toast('存储空间不足，试试换张小一点的背景图')}}
+
+/* ---------- 音效：全部实时合成，离线可用 ---------- */
+var actx=null;
+function ac(){if(!actx){var C=window.AudioContext||window.webkitAudioContext;if(!C)return null;actx=new C()}if(actx.state==='suspended')actx.resume();return actx}
+function tone(f,t0,dur,vol,type){var c=ac();if(!c)return;var o=c.createOscillator(),g=c.createGain();o.type=type||'sine';o.frequency.setValueAtTime(f,t0);g.gain.setValueAtTime(.0001,t0);g.gain.linearRampToValueAtTime(vol||.08,t0+.012);g.gain.exponentialRampToValueAtTime(.0001,t0+dur);o.connect(g);g.connect(c.destination);o.start(t0);o.stop(t0+dur+.03)}
+function noise(t0,dur,vol,freq){var c=ac();if(!c)return;var len=Math.ceil(c.sampleRate*dur),buf=c.createBuffer(1,len,c.sampleRate),data=buf.getChannelData(0);for(var i=0;i<len;i++)data[i]=(Math.random()*2-1)*Math.pow(1-i/len,2);var src=c.createBufferSource(),f=c.createBiquadFilter(),g=c.createGain();src.buffer=buf;f.type='bandpass';f.frequency.value=freq||1800;f.Q.value=.8;g.gain.value=vol||.1;src.connect(f);f.connect(g);g.connect(c.destination);src.start(t0);src.stop(t0+dur)}
+function sfx(kind){
+  if(!S.settings.sound)return;var c=ac();if(!c)return;var t=c.currentTime;
+  if(kind==='shuffle'){for(var i=0;i<4;i++)noise(t+i*.075,.09,.07,1500+i*350)}
+  else if(kind==='flip'){noise(t,.17,.11,2400);tone(720,t+.02,.13,.05,'triangle')}
+  else if(kind==='reveal'){[523.25,659.25,783.99,1046.5].forEach(function(f,i){tone(f,t+i*.09,.55,.085,'sine')});noise(t,.3,.035,4200)}
+  else if(kind==='tap'){tone(880,t,.06,.03,'sine')}
+  else if(kind==='save'){[659.25,880].forEach(function(f,i){tone(f,t+i*.08,.28,.07,'sine')})}
+}
+
+/* ---------- 视觉 ---------- */
+function applyVisual(){
+  var s=S.settings;
+  document.body.dataset.theme=s.theme||'mystic';
+  document.body.classList.toggle('with-bg',!!s.bgImage);
+  document.body.style.setProperty('--accent',s.accent||'#d4af6a');
+  var bg=document.getElementById('bg');
+  bg.style.backgroundImage=s.bgImage?'url("'+s.bgImage+'")':'';
+  document.getElementById('veil').style.opacity=s.bgImage?(s.overlay==null?.55:s.overlay):0;
+}
+function toast(msg){var t=document.getElementById('toast');t.textContent=msg;t.classList.add('show');clearTimeout(t._tm);t._tm=setTimeout(function(){t.classList.remove('show')},2200)}
+
+/* ---------- 抽牌逻辑 ---------- */
+function answersOK(){
+  S.dimensions.forEach(function(d){var a=S.answers[d.id];if(!a||d.options.indexOf(a)<0)S.answers[d.id]=ANY});
+}
+function candidates(){
+  answersOK();
+  var pool=S.cards.filter(function(c){return c.enabled!==false});
+  S.dimensions.forEach(function(d){
+    var a=S.answers[d.id];if(a===ANY)return;
+    pool=pool.filter(function(c){var t=(c.tags&&c.tags[d.id])||ANY;return t===a||t===ANY});
+  });
+  return pool;
+}
+function weighted(pool){
+  if(!S.settings.avoidRecent)return {list:pool,avoided:0};
+  var days=+S.settings.avoidDays||3,from=Date.now()-days*86400000;
+  var recent={};S.meals.forEach(function(m){var t=new Date(String(m.date)+'T12:00:00').getTime();if(t>=from)recent[m.name]=1});
+  var fresh=pool.filter(function(c){return !recent[c.name]});
+  return fresh.length?{list:fresh,avoided:pool.length-fresh.length}:{list:pool,avoided:0};
+}
+function startDraw(){
+  var w=weighted(candidates());
+  if(!w.list.length){toast('没有符合条件的牌，放宽条件或去牌库加几张');return}
+  sfx('shuffle');
+  state.drawCards=shuffle(w.list.slice()).slice(0,Math.min(+S.settings.cardCount||3,w.list.length));
+  state.avoided=w.avoided;state.picked=null;state.phase='dealing';render();
+}
+function tagList(c){return S.dimensions.map(function(d){return (c.tags&&c.tags[d.id])&&c.tags[d.id]!==ANY?c.tags[d.id]:null}).filter(Boolean)}
+
+/* ---------- 牌背图案 ---------- */
+function backSVG(){return '<svg viewBox="0 0 100 150" xmlns="http://www.w3.org/2000/svg">'+
+ '<rect x="4" y="4" width="92" height="142" rx="8" fill="none" stroke="#d4af6a" stroke-opacity=".5"/>'+
+ '<rect x="9" y="9" width="82" height="132" rx="6" fill="none" stroke="#d4af6a" stroke-opacity=".22"/>'+
+ '<circle cx="50" cy="75" r="32" fill="none" stroke="#d4af6a" stroke-opacity=".55"/>'+
+ '<circle cx="50" cy="75" r="26" fill="none" stroke="#d4af6a" stroke-opacity=".22"/>'+
+ '<path d="M50 43 L54.5 69.5 L81 75 L54.5 80.5 L50 107 L45.5 80.5 L19 75 L45.5 69.5 Z" fill="#d4af6a" fill-opacity=".82"/>'+
+ '<circle cx="50" cy="75" r="5" fill="#2b1c50"/>'+
+ '<path d="M22 26 l1.5 4 4 1.5 -4 1.5 -1.5 4 -1.5 -4 -4 -1.5 4 -1.5 Z" fill="#d4af6a" fill-opacity=".65"/>'+
+ '<path d="M78 124 l1.5 4 4 1.5 -4 1.5 -1.5 4 -1.5 -4 -4 -1.5 4 -1.5 Z" fill="#d4af6a" fill-opacity=".65"/>'+
+ '<text x="50" y="20" text-anchor="middle" fill="#d4af6a" fill-opacity=".7" font-size="7" font-family="serif">✦</text>'+
+ '<text x="50" y="137" text-anchor="middle" fill="#d4af6a" fill-opacity=".7" font-size="7" font-family="serif">✦</text>'+
+ '</svg>'}
+
+/* ---------- 渲染 ---------- */
+function render(){
+  applyVisual();answersOK();
+  var meta={
+    draw:[S.settings.title||'今日食签','✦ 让牌替你决定这一餐'],
+    deck:['我的牌库','共 '+S.cards.length+' 张 · '+S.cards.filter(function(c){return c.enabled!==false}).length+' 张参与抽牌'],
+    log:['饮食手记','记下吃过的，也记下想吃的'],
+    me:['美化与设置','把它调成你喜欢的样子']
+  }[state.tab];
+  document.getElementById('hdr').innerHTML='<div><h1>'+esc(meta[0])+'</h1><p class="sub">'+esc(meta[1])+'</p></div><div class="mark">✧</div>';
+  document.getElementById('tabs').innerHTML=TABS.map(function(t){return '<button data-act="tab" data-val="'+t[0]+'" class="'+(state.tab===t[0]?'on':'')+'"><i>'+t[1]+'</i>'+t[2]+'</button>'}).join('');
+  var html=state.tab==='draw'?viewDraw():state.tab==='deck'?viewDeck():state.tab==='log'?viewLog():viewMe();
+  document.getElementById('main').innerHTML=html;
+  window.scrollTo(0,0);
+}
+function viewDraw(){
+  if(state.phase==='dealing'||state.phase==='revealed')return viewDeal();
+  var n=candidates().length;
+  var qs='<div class="sec"><h2>先回答几个问题</h2><button class="link" data-act="qmanage">管理问题 ›</button></div>'+
+    '<div class="card">'+S.dimensions.map(function(d){
+      return '<div class="q-block"><p class="q-title"><span class="dot"></span>'+esc(d.name)+'</p><div class="chips">'+d.options.map(function(o){
+        return '<button class="chip '+(S.answers[d.id]===o?'on':'')+'" data-act="answer" data-dim="'+esc(d.id)+'" data-val="'+esc(o)+'">'+esc(o)+'</button>';
+      }).join('')+'</div></div>';
+    }).join('')+'</div>';
+  return '<div class="hero"><div class="mini">'+backSVG()+'</div><h3>今天，把选择交给牌</h3><p>'+esc(prettyDate(today()))+'<br>静下心，凭直觉抽一张</p></div>'+
+    qs+'<div class="match">符合条件的有 <b>'+n+'</b> 张牌'+(S.settings.avoidRecent?' · 已避开最近 '+(+S.settings.avoidDays||3)+' 天吃过的':'')+'</div>'+
+    '<button class="btn primary" data-act="draw-start">✦ 洗牌 · 开始翻牌</button>'+
+    '<p class="hint">答案会筛掉不合适的选项，翻牌只在剩下的牌里抽<br>音效可在「美化」里关闭</p>';
+}
+function viewDeal(){
+  var cardsHtml=state.drawCards.map(function(c){
+    var cls='flip'+(state.phase==='revealed'?(state.picked===c.id?' picked is-flipped':' dimmed'):'');
+    var tags=tagList(c);
+    return '<div class="'+cls+'" data-act="flip" data-id="'+esc(c.id)+'"><div class="flip-inner">'+
+      '<div class="face back">'+backSVG()+'</div>'+
+      '<div class="face front"><div class="em">'+esc(c.emoji)+'</div><div class="nm">'+esc(c.name)+'</div><div class="tg">'+esc(tags.slice(0,2).join(' · '))+'</div></div>'+
+      '</div></div>';
+  }).join('');
+  var cards='<div class="cards" data-count="'+state.drawCards.length+'">'+cardsHtml+'</div>';
+  if(state.phase==='dealing')return '<div class="sec"><h2>凭直觉，选一张</h2></div>'+cards+
+    '<p class="hint">点一下牌面翻开它'+(state.avoided?' · 已为你避开 '+state.avoided+' 个最近吃过的选项':'')+'</p>'+
+    '<button class="btn ghost small" data-act="draw-reset">← 重新回答问题</button>';
+  var c=state.drawCards.filter(function(x){return x.id===state.picked})[0]||state.drawCards[0];
+  var tags=tagList(c);
+  return '<div class="sec"><h2>今天的签</h2></div>'+cards+
+    '<div class="result"><div class="big">'+esc(c.emoji)+'</div><h3>'+esc(c.name)+'</h3>'+
+    (tags.length?'<div class="tags">'+tags.map(function(t){return '<span>'+esc(t)+'</span>'}).join('')+'</div>':'')+
+    (c.note?'<p class="note">'+esc(c.note)+'</p>':'<p class="note">就它了，别再纠结啦</p>')+'</div>'+
+    '<button class="btn primary" data-act="draw-eat">✓ 就吃这个，记一餐</button>'+
+    '<div class="row2"><button class="btn ghost small" data-act="draw-again">换一批</button><button class="btn ghost small" data-act="draw-reset">改答案</button></div>';
+}
+function viewDeck(){
+  var rows=S.cards.map(function(c){
+    var tags=tagList(c).join(' · ')||'未设置标签';
+    return '<div class="item deck-row" data-search="'+esc((c.name+' '+tags+' '+(c.note||'')).toLowerCase())+'">'+
+      '<div class="ic">'+esc(c.emoji)+'</div><div class="tx"><b>'+esc(c.name)+'</b><small>'+esc(tags)+(c.note?' · '+esc(c.note):'')+'</small></div>'+
+      '<div class="ops"><button class="iconbtn '+(c.enabled!==false?'on':'')+'" data-act="deck-toggle" data-id="'+esc(c.id)+'" title="启用/停用">'+(c.enabled!==false?'●':'○')+'</button>'+
+      '<button class="iconbtn" data-act="deck-edit" data-id="'+esc(c.id)+'">✎</button>'+
+      '<button class="iconbtn del" data-act="deck-del" data-id="'+esc(c.id)+'">✕</button></div></div>';
+  }).join('');
+  return '<button class="btn primary" data-act="deck-add">＋ 新增一张牌</button>'+
+    '<div class="sec"><h2>全部牌面</h2><button class="link" data-act="qmanage">设置标签维度 ›</button></div>'+
+    '<input class="search" id="deck-search" placeholder="搜菜名、标签或备注…" value="'+esc(state.deckSearch)+'">'+
+    '<div class="rows" id="deck-rows">'+(rows||'<div class="empty"><span class="e">🃏</span>牌库还是空的，先加几张吧</div>')+'</div>'+
+    '<p class="hint">停用的牌不参与抽牌；标签用于回答问题时的筛选</p>';
+}
+function viewLog(){
+  var head='<div class="subtabs"><button data-act="logtab" data-val="meals" class="'+(state.logTab==='meals'?'on':'')+'">吃了什么</button><button data-act="logtab" data-val="wishes" class="'+(state.logTab==='wishes'?'on':'')+'">想吃什么</button></div>';
+  if(state.logTab==='meals'){
+    var groups={};S.meals.forEach(function(m){(groups[m.date]=groups[m.date]||[]).push(m)});
+    var dates=Object.keys(groups).sort().reverse();
+    var body=dates.map(function(d){
+      return '<div class="group">'+esc(prettyDate(d))+'</div><div class="rows">'+groups[d].map(function(m){
+        return '<div class="item"><div class="ic">'+esc(m.emoji||'🍽️')+'</div><div class="tx"><b>'+esc(m.name)+'</b><small>'+esc(m.slot||'一餐')+(m.from==='draw'?' · 翻牌选的':' · 手动记录')+'</small></div><div class="ops"><button class="iconbtn del" data-act="meal-del" data-id="'+esc(m.id)+'">✕</button></div></div>';
+      }).join('')+'</div>';
+    }).join('');
+    if(!dates.length)body='<div class="empty"><span class="e">📖</span>还没有记录<br>翻到牌后点「就吃这个」就会自动记下</div>';
+    var cnt={};S.meals.forEach(function(m){cnt[m.name]=(cnt[m.name]||0)+1});
+    var top=Object.keys(cnt).sort(function(a,b){return cnt[b]-cnt[a]})[0];
+    return head+'<button class="btn primary" data-act="meal-add">＋ 记一餐</button><div class="sec"><h2>饮食流水</h2></div>'+body+
+      (top?'<p class="hint">目前最常吃：'+esc(top)+' × '+cnt[top]+'</p>':'');
+  }
+  var wishes=S.wishes.map(function(w){
+    return '<div class="item"><div class="ic">💭</div><div class="tx"><b>'+esc(w.name)+'</b><small>'+esc(w.note||'还没写备注')+'</small></div><div class="ops"><button class="iconbtn on" data-act="wish-deck" data-id="'+esc(w.id)+'" title="加入牌库">＋</button><button class="iconbtn del" data-act="wish-del" data-id="'+esc(w.id)+'">✕</button></div></div>';
+  }).join('');
+  return head+'<button class="btn primary" data-act="wish-add">＋ 加个心愿</button><div class="sec"><h2>想吃清单</h2></div>'+
+    (wishes?'<div class="rows">'+wishes+'</div>':'<div class="empty"><span class="e">💭</span>想到什么先记下来<br>点「＋」可以一键加进牌库</div>');
+}
+function viewMe(){
+  var s=S.settings;
+  var sw=THEMES.map(function(t){return '<div class="sw '+(s.theme===t.id?'on':'')+'" data-act="theme" data-val="'+t.id+'" style="background:'+t.sw+'"><span>'+t.name+'</span></div>'}).join('');
+  var dots=ACCENTS.map(function(c){return '<div class="cdot '+(s.accent===c?'on':'')+'" data-act="accent" data-val="'+c+'" style="background:'+c+'"></div>'}).join('');
+  return '<div class="sec"><h2>整体主题</h2></div><div class="card"><div class="swatches">'+sw+'</div>'+
+    '<div class="colors">'+dots+'<input type="color" id="inp-color" data-set="accent" value="'+esc(s.accent)+'" title="自定义主色"></div></div>'+
+    '<div class="sec"><h2>自定义背景</h2></div><div class="card">'+
+    '<div class="setrow"><div class="l"><b>上传一张图片</b><small>会等比压缩后存在本机，不上传服务器</small></div><button class="btn ghost small" style="width:auto;padding:9px 14px;margin:0" data-act="bg-pick">选图</button></div>'+
+    (s.bgImage?'<div class="setrow"><div class="l"><b>暗色蒙层</b><small>让文字在花背景上依然清楚</small></div><input type="range" data-set="overlay" min="0.1" max="0.9" step="0.05" value="'+esc(s.overlay)+'"></div>'+
+      '<button class="btn ghost small" data-act="bg-clear">移除背景图</button>':'<p class="hint" style="text-align:left;margin:10px 0 0">当前使用主题自带背景</p>')+'</div>'+
+    '<div class="sec"><h2>名字与抽牌</h2></div><div class="card">'+
+    '<div class="field"><label>应用标题</label><input type="text" data-set="title" value="'+esc(s.title||'')+'" maxlength="12"></div>'+
+    '<div class="setrow"><div class="l"><b>翻牌音效</b><small>洗牌、翻牌、揭晓三种合成音</small></div><div class="switch '+(s.sound?'on':'')+'" data-act="toggle" data-key="sound"></div></div>'+
+    '<div class="setrow"><div class="l"><b>每次摆几张牌</b></div><select data-set="cardCount">'+[3,4,5].map(function(n){return '<option value="'+n+'" '+(+s.cardCount===n?'selected':'')+'>'+n+' 张</option>'}).join('')+'</select></div>'+
+    '<div class="setrow"><div class="l"><b>避开最近吃过的</b><small>优先抽没吃过的，全吃过时才放回</small></div><div class="switch '+(s.avoidRecent?'on':'')+'" data-act="toggle" data-key="avoidRecent"></div></div>'+
+    '<div class="setrow"><div class="l"><b>回避天数</b></div><select data-set="avoidDays">'+[2,3,5,7].map(function(n){return '<option value="'+n+'" '+(+s.avoidDays===n?'selected':'')+'>'+n+' 天内</option>'}).join('')+'</select></div></div>'+
+    '<div class="sec"><h2>我的数据</h2></div><div class="card">'+
+    '<p class="hint" style="text-align:left;margin:0 0 12px">所有内容只保存在这台设备的浏览器里。换手机或清理浏览器前，记得导出备份。</p>'+
+    '<div class="row2"><button class="btn ghost small" data-act="export">导出备份</button><button class="btn ghost small" data-act="import">导入备份</button></div>'+
+    '<button class="btn ghost small" data-act="reset-ask" style="color:#e88">恢复默认数据</button></div>'+
+    '<p class="hint">'+esc(S.cards.length)+' 张牌 · '+esc(S.meals.length)+' 条饮食记录 · '+esc(S.wishes.length)+' 个心愿</p>';
+}
+
+/* ---------- 弹层 ---------- */
+function openSheet(title,body,foot){
+  var sh=document.getElementById('sheet');
+  sh.innerHTML='<div class="sheet-head"><h3>'+esc(title)+'</h3><button data-act="sheet-close">✕</button></div><div class="sheet-body">'+body+'</div><div class="sheet-foot">'+(foot||'')+'</div>';
+  sh.classList.add('open');document.getElementById('mask').classList.add('open');
+}
+function closeSheet(){document.getElementById('sheet').classList.remove('open');document.getElementById('mask').classList.remove('open')}
+
+function questionSheet(){
+  var body=S.dimensions.map(function(d,i){
+    return '<div class="qedit"><div class="top"><input class="q-name" value="'+esc(d.name)+'" placeholder="问题名称" maxlength="20"><button data-act="q-del" data-i="'+i+'">✕</button></div>'+
+      '<div class="field" style="margin:0"><label>选项（用逗号或空格分隔，第一项固定为「不限」）</label><input class="q-opt" value="'+esc(d.options.slice(1).join('、'))+'" placeholder="例如：清淡、香辣、酸甜"></div></div>';
+  }).join('')+'<button class="btn ghost small" data-act="q-add">＋ 再加一个问题</button>'+
+    '<p class="hint" style="text-align:left;margin-top:12px">每个问题对应牌库里的一个标签维度。改完选项后，记得去牌库给牌补上新标签。</p>';
+  openSheet('设置筛选问题',body,'<button class="btn primary" data-act="q-save">保存问题</button>');
+}
+function collectQuestions(){
+  var names=document.querySelectorAll('.q-name'),opts=document.querySelectorAll('.q-opt');
+  for(var i=0;i<names.length;i++){
+    var d=S.dimensions[i];if(!d)continue;
+    d.name=names[i].value.trim()||'未命名问题';
+    var parts=(opts[i]?opts[i].value:'').split(/[,，、;；\s]+/).map(function(x){return x.trim()}).filter(function(x){return x&&x!==ANY});
+    d.options=[ANY].concat(parts);
+  }
+}
+function cardSheet(id){
+  var c=id?S.cards.filter(function(x){return x.id===id})[0]:null;
+  var selects=S.dimensions.map(function(d){
+    var cur=c&&c.tags?c.tags[d.id]:ANY;
+    var opts=d.options.slice();if(opts.indexOf(cur)<0)opts.push(cur);
+    return '<div class="field"><label>'+esc(d.name)+'</label><select id="tag-'+esc(d.id)+'">'+opts.map(function(o){return '<option value="'+esc(o)+'" '+(o===cur?'selected':'')+'>'+esc(o)+'</option>'}).join('')+'</select></div>';
+  }).join('');
+  var datalist='<datalist id="card-list">'+S.cards.map(function(x){return '<option value="'+esc(x.name)+'"></option>'}).join('')+'</datalist>';
+  var body='<div class="field"><label>名字</label><input id="f-name" list="card-list" value="'+esc(c?c.name:'')+'" placeholder="例如：楼下的牛肉面" maxlength="20">'+datalist+'</div>'+
+    '<div class="grid2"><div class="field"><label>图标 emoji</label><input id="f-emoji" value="'+esc(c?c.emoji:'🍽️')+'" maxlength="4"></div>'+
+    '<div class="field"><label>备注</label><input id="f-note" value="'+esc(c?c.note:'')+'" placeholder="选填" maxlength="40"></div></div>'+selects+
+    '<p class="hint" style="text-align:left">标为「不限」的牌不会被任何答案筛掉，适合什么都行的选项。</p>';
+  openSheet(c?'编辑这张牌':'新增一张牌',body,'<button class="btn primary" data-act="deck-save" data-id="'+esc(id||'')+'">保存到牌库</button>');
+}
+function saveCard(id){
+  var name=val('f-name').trim();if(!name){toast('先给这张牌起个名字');return}
+  var tags={};S.dimensions.forEach(function(d){var e=document.getElementById('tag-'+d.id);tags[d.id]=e?e.value:ANY});
+  var obj={name:name,emoji:val('f-emoji').trim()||'🍽️',note:val('f-note').trim(),tags:tags};
+  if(id){var c=S.cards.filter(function(x){return x.id===id})[0];if(c)Object.assign(c,obj)}
+  else S.cards.unshift(Object.assign({id:uid(),enabled:true},obj));
+  save();sfx('save');closeSheet();render();toast(id?'已更新':'已加入牌库');
+}
+function mealSheet(){
+  var body='<div class="field"><label>吃了什么</label><input id="f-name" list="card-list" placeholder="可以手输，也可以从牌库选" maxlength="20"><datalist id="card-list">'+S.cards.map(function(x){return '<option value="'+esc(x.name)+'"></option>'}).join('')+'</datalist></div>'+
+    '<div class="grid2"><div class="field"><label>日期</label><input type="date" id="f-date" value="'+today()+'"></div>'+
+    '<div class="field"><label>餐次</label><select id="f-slot">'+['早餐','午餐','晚餐','夜宵'].map(function(x){return '<option '+(x==='午餐'?'selected':'')+'>'+x+'</option>'}).join('')+'</select></div></div>'+
+    '<div class="field"><label>图标</label><input id="f-emoji" value="🍽️" maxlength="4"></div>';
+  openSheet('记一餐',body,'<button class="btn primary" data-act="meal-save">保存记录</button>');
+}
+function wishSheet(){
+  var body='<div class="field"><label>想吃什么</label><input id="f-name" placeholder="例如：公司附近那家煲仔饭" maxlength="20"></div>'+
+    '<div class="field"><label>备注</label><textarea id="f-note" placeholder="选填，比如「周末去」「和同事一起」"></textarea></div>';
+  openSheet('加个心愿',body,'<button class="btn primary" data-act="wish-save">记下来</button>');
+}
+function compressImage(file,cb){
+  var r=new FileReader();
+  r.onload=function(){
+    var img=new Image();
+    img.onload=function(){
+      var max=1200,ratio=Math.min(1,max/Math.max(img.width,img.height));
+      var w=Math.round(img.width*ratio),h=Math.round(img.height*ratio);
+      var cv=document.createElement('canvas');cv.width=w;cv.height=h;
+      cv.getContext('2d').drawImage(img,0,0,w,h);
+      try{cb(cv.toDataURL('image/jpeg',.78))}catch(e){toast('这张图片读不出来，换一张试试')}
+    };
+    img.onerror=function(){toast('图片解析失败，换一张试试')};
+    img.src=r.result;
+  };
+  r.readAsDataURL(file);
+}
+function exportData(){
+  try{
+    var blob=new Blob([JSON.stringify(S,null,2)],{type:'application/json'});
+    var a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download='今日食签-备份-'+today()+'.json';
+    document.body.appendChild(a);a.click();document.body.removeChild(a);
+    setTimeout(function(){URL.revokeObjectURL(a.href)},1000);toast('备份已导出');
+  }catch(e){toast('导出失败，请检查浏览器设置')}
+}
+function importData(file){
+  var r=new FileReader();
+  r.onload=function(){
+    try{var d=JSON.parse(r.result);if(!d||!Array.isArray(d.cards))throw new Error('bad');S=normalize(d);save();applyVisual();render();toast('数据已导入')}
+    catch(e){toast('这不是有效的备份文件')}
+  };
+  r.readAsText(file);
+}
+
+/* ---------- 事件 ---------- */
+document.addEventListener('click',function(ev){
+  var el=ev.target.closest('[data-act]');if(!el)return;
+  var act=el.dataset.act,id=el.dataset.id,v=el.dataset.val,dim=el.dataset.dim;
+  if(act!=='sheet-close'&&act!=='answer')sfx('tap');
+  switch(act){
+    case 'tab':state.tab=v;state.phase=state.tab==='draw'?state.phase:'idle';render();break;
+    case 'answer':S.answers[dim]=v;save();sfx('tap');render();break;
+    case 'qmanage':questionSheet();break;
+    case 'q-add':collectQuestions();S.dimensions.push({id:uid(),name:'新问题',options:[ANY,'选项A','选项B']});save();questionSheet();break;
+    case 'q-del':collectQuestions();var i=+el.dataset.i;var gone=S.dimensions.splice(i,1)[0];if(gone){delete S.answers[gone.id];S.cards.forEach(function(c){if(c.tags)delete c.tags[gone.id]})}save();questionSheet();break;
+    case 'q-save':collectQuestions();save();sfx('save');closeSheet();render();toast('问题已更新');break;
+    case 'draw-start':startDraw();break;
+    case 'flip':
+      if(state.phase!=='dealing')break;
+      sfx('flip');el.classList.add('is-flipped');state.picked=id;
+      setTimeout(function(){state.phase='revealed';render();sfx('reveal')},700);
+      break;
+    case 'draw-again':startDraw();break;
+    case 'draw-reset':state.phase='idle';state.picked=null;render();break;
+    case 'draw-eat':
+      var c=state.drawCards.filter(function(x){return x.id===state.picked})[0]||state.drawCards[0];
+      if(c){S.meals.unshift({id:uid(),date:today(),slot:'午餐',name:c.name,emoji:c.emoji,from:'draw'});save();sfx('save');state.phase='idle';state.picked=null;render();toast('已记入今天的午餐 ✓')}
+      break;
+    case 'deck-add':cardSheet(null);break;
+    case 'deck-edit':cardSheet(id);break;
+    case 'deck-save':saveCard(id);break;
+    case 'deck-toggle':var t=S.cards.filter(function(x){return x.id===id})[0];if(t){t.enabled=t.enabled===false;save();render()}break;
+    case 'deck-del':
+      if(confirm('确定从牌库删掉这张牌吗？')){S.cards=S.cards.filter(function(x){return x.id!==id});save();render();toast('已删除')}
+      break;
+    case 'logtab':state.logTab=v;render();break;
+    case 'meal-add':mealSheet();break;
+    case 'meal-save':
+      var mn=val('f-name').trim();if(!mn){toast('写下吃了什么');return}
+      S.meals.unshift({id:uid(),date:val('f-date')||today(),slot:val('f-slot')||'一餐',name:mn,emoji:val('f-emoji').trim()||'🍽️',from:'manual'});
+      save();sfx('save');closeSheet();render();toast('记好了');break;
+    case 'meal-del':S.meals=S.meals.filter(function(x){return x.id!==id});save();render();break;
+    case 'wish-add':wishSheet();break;
+    case 'wish-save':
+      var wn=val('f-name').trim();if(!wn){toast('写下想吃什么');return}
+      S.wishes.unshift({id:uid(),name:wn,note:val('f-note').trim()});save();sfx('save');closeSheet();render();toast('心愿记下了');break;
+    case 'wish-del':S.wishes=S.wishes.filter(function(x){return x.id!==id});save();render();break;
+    case 'wish-deck':
+      var w=S.wishes.filter(function(x){return x.id===id})[0];if(!w)break;
+      var tags={};S.dimensions.forEach(function(d){tags[d.id]=ANY});
+      S.cards.unshift({id:uid(),name:w.name,emoji:'🍽️',note:w.note||'',tags:tags,enabled:true});
+      S.wishes=S.wishes.filter(function(x){return x.id!==id});save();sfx('save');render();toast('已加入牌库，记得补上标签');break;
+    case 'theme':
+      var th=THEMES.filter(function(x){return x.id===v})[0];if(th){S.settings.theme=th.id;S.settings.accent=th.accent;save();render()}break;
+    case 'accent':S.settings.accent=v;save();render();break;
+    case 'bg-pick':document.getElementById('file-bg').click();break;
+    case 'bg-clear':S.settings.bgImage=null;save();render();toast('已恢复主题背景');break;
+    case 'toggle':S.settings[el.dataset.key]=!S.settings[el.dataset.key];save();render();break;
+    case 'export':exportData();break;
+    case 'import':document.getElementById('file-import').click();break;
+    case 'reset-ask':
+      openSheet('恢复默认数据','<p class="hint" style="text-align:left;font-size:13px">这会清空你加的牌、饮食记录、心愿、问题和美化设置，无法撤销。<br><br>建议先「导出备份」。</p>','<button class="btn ghost" data-act="reset-do" style="color:#e88">确认清空并恢复默认</button>');
+      break;
+    case 'reset-do':S=defaults();save();closeSheet();state.tab='draw';state.phase='idle';render();toast('已恢复默认');break;
+    case 'sheet-close':closeSheet();break;
+  }
+});
+document.addEventListener('click',function(ev){if(ev.target.id==='mask')closeSheet()});
+document.addEventListener('input',function(ev){
+  var el=ev.target;
+  if(el.id==='deck-search'){state.deckSearch=el.value;var q=el.value.trim().toLowerCase();document.querySelectorAll('.deck-row').forEach(function(row){row.style.display=(!q||row.dataset.search.indexOf(q)>=0)?'':'none'})}
+  if(el.dataset&&el.dataset.set==='overlay'){S.settings.overlay=+el.value;applyVisual()}
+});
+document.addEventListener('change',function(ev){
+  var el=ev.target;
+  if(el.id==='file-bg'){
+    var f=el.files&&el.files[0];
+    if(f)compressImage(f,function(data){S.settings.bgImage=data;save();render();toast('背景换好了 ✨')});
+    el.value='';return;
+  }
+  if(el.id==='file-import'){
+    var fi=el.files&&el.files[0];if(fi)importData(fi);el.value='';return;
+  }
+  var k=el.dataset&&el.dataset.set;if(!k)return;
+  S.settings[k]=(k==='overlay'||k==='cardCount'||k==='avoidDays')?+el.value:el.value;
+  save();applyVisual();if(k!=='overlay')render();
+});
+
+answersOK();save();render();
+})();
+</script>
+</body>
+</html>
