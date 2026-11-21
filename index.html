@@ -65,8 +65,8 @@ body[data-theme="fresh"] .btn.primary,body[data-theme="china"] .btn.primary,body
 .cards[data-count="3"]{grid-template-columns:repeat(3,minmax(0,1fr));max-width:340px;margin-left:auto;margin-right:auto}
 .cards[data-count="4"]{grid-template-columns:repeat(4,minmax(0,1fr))}
 .cards[data-count="5"]{grid-template-columns:repeat(5,minmax(0,1fr));gap:7px}
-.flip{aspect-ratio:2/3;perspective:900px;cursor:pointer;transition:opacity .35s,transform .35s}
-.flip-inner{position:relative;width:100%;height:100%;transform-style:preserve-3d;transition:transform .72s cubic-bezier(.2,.8,.2,1)}
+.flip{aspect-ratio:2/3;perspective:900px;cursor:pointer;transition:opacity .65s,transform .65s}
+.flip-inner{position:relative;width:100%;height:100%;transform-style:preserve-3d;transition:transform 1.25s cubic-bezier(.25,.8,.25,1)}
 .flip.is-flipped .flip-inner{transform:rotateY(180deg)}
 .face{position:absolute;inset:0;border-radius:13px;overflow:hidden;backface-visibility:hidden;-webkit-backface-visibility:hidden;border:1px solid var(--line);box-shadow:0 8px 20px rgba(0,0,0,.3)}
 .face.back{background:linear-gradient(150deg,#2b1c50,#140d2c);border-color:rgba(212,175,106,.55);padding:5px}
@@ -81,7 +81,7 @@ body[data-theme="fresh"] .btn.primary,body[data-theme="china"] .btn.primary,body
 .cards[data-count="4"] .face.front .em{font-size:24px}
 .flip.dimmed{opacity:.22;transform:scale(.9);pointer-events:none}
 .flip.picked{transform:scale(1.06);z-index:2}
-.result{text-align:center;padding:20px 16px;background:var(--card);border:1px solid var(--accent);border-radius:20px;box-shadow:0 10px 34px var(--shadow);margin-bottom:14px;animation:rise .45s ease-out}
+.result{text-align:center;padding:20px 16px;background:var(--card);border:1px solid var(--accent);border-radius:20px;box-shadow:0 10px 34px var(--shadow);margin-bottom:14px;animation:rise .75s cubic-bezier(.2,.8,.2,1)}
 @keyframes rise{from{opacity:0;transform:translateY(14px)}to{opacity:1;transform:none}}
 .result .big{font-size:52px;line-height:1.1}
 .result h3{margin:8px 0 6px;font-size:22px;letter-spacing:2px;font-family:"Songti SC","Noto Serif SC",serif}
@@ -253,16 +253,29 @@ function save(){try{localStorage.setItem(KEY,JSON.stringify(S))}catch(e){toast('
 
 /* ---------- 音效：全部实时合成，离线可用 ---------- */
 var actx=null;
-function ac(){if(!actx){var C=window.AudioContext||window.webkitAudioContext;if(!C)return null;actx=new C()}if(actx.state==='suspended')actx.resume();return actx}
-function tone(f,t0,dur,vol,type){var c=ac();if(!c)return;var o=c.createOscillator(),g=c.createGain();o.type=type||'sine';o.frequency.setValueAtTime(f,t0);g.gain.setValueAtTime(.0001,t0);g.gain.linearRampToValueAtTime(vol||.08,t0+.012);g.gain.exponentialRampToValueAtTime(.0001,t0+dur);o.connect(g);g.connect(c.destination);o.start(t0);o.stop(t0+dur+.03)}
-function noise(t0,dur,vol,freq){var c=ac();if(!c)return;var len=Math.ceil(c.sampleRate*dur),buf=c.createBuffer(1,len,c.sampleRate),data=buf.getChannelData(0);for(var i=0;i<len;i++)data[i]=(Math.random()*2-1)*Math.pow(1-i/len,2);var src=c.createBufferSource(),f=c.createBiquadFilter(),g=c.createGain();src.buffer=buf;f.type='bandpass';f.frequency.value=freq||1800;f.Q.value=.8;g.gain.value=vol||.1;src.connect(f);f.connect(g);g.connect(c.destination);src.start(t0);src.stop(t0+dur)}
+function ac(){
+  if(!actx){var C=window.AudioContext||window.webkitAudioContext;if(!C)return null;try{actx=new C()}catch(e){return null}}
+  if(actx.state==='suspended'||actx.state==='interrupted'){try{actx.resume()}catch(e){}}
+  return actx;
+}
+/* 移动端 Safari 必须在用户手势的同步调用栈里解锁音频：播一段静音 */
+function unlockAudio(){
+  var c=ac();if(!c)return;
+  if(c.state!=='running'){try{c.resume()}catch(e){}}
+  try{var b=c.createBuffer(1,Math.ceil(c.sampleRate*.02),c.sampleRate),s=c.createBufferSource();s.buffer=b;s.connect(c.destination);s.start(0)}catch(e){}
+}
+['pointerdown','touchstart','click'].forEach(function(ev){
+  document.addEventListener(ev,function once(){unlockAudio();['pointerdown','touchstart','click'].forEach(function(x){document.removeEventListener(x,once,true)})},{passive:true,capture:true});
+});
+function tone(f,t0,dur,vol,type){var c=ac();if(!c)return;t0=Math.max(t0,c.currentTime+.005);var o=c.createOscillator(),g=c.createGain();o.type=type||'sine';o.frequency.setValueAtTime(f,t0);g.gain.setValueAtTime(.0001,t0);g.gain.linearRampToValueAtTime(vol||.1,t0+.015);g.gain.exponentialRampToValueAtTime(.0001,t0+dur);o.connect(g);g.connect(c.destination);o.start(t0);o.stop(t0+dur+.03)}
+function noise(t0,dur,vol,freq){var c=ac();if(!c)return;t0=Math.max(t0,c.currentTime+.005);var len=Math.ceil(c.sampleRate*dur),buf=c.createBuffer(1,len,c.sampleRate),data=buf.getChannelData(0);for(var i=0;i<len;i++)data[i]=(Math.random()*2-1)*Math.pow(1-i/len,2);var src=c.createBufferSource(),f=c.createBiquadFilter(),g=c.createGain();src.buffer=buf;f.type='bandpass';f.frequency.value=freq||1800;f.Q.value=.8;g.gain.value=vol||.12;src.connect(f);f.connect(g);g.connect(c.destination);src.start(t0);src.stop(t0+dur)}
 function sfx(kind){
-  if(!S.settings.sound)return;var c=ac();if(!c)return;var t=c.currentTime;
-  if(kind==='shuffle'){for(var i=0;i<4;i++)noise(t+i*.075,.09,.07,1500+i*350)}
-  else if(kind==='flip'){noise(t,.17,.11,2400);tone(720,t+.02,.13,.05,'triangle')}
-  else if(kind==='reveal'){[523.25,659.25,783.99,1046.5].forEach(function(f,i){tone(f,t+i*.09,.55,.085,'sine')});noise(t,.3,.035,4200)}
-  else if(kind==='tap'){tone(880,t,.06,.03,'sine')}
-  else if(kind==='save'){[659.25,880].forEach(function(f,i){tone(f,t+i*.08,.28,.07,'sine')})}
+  if(!S.settings.sound)return;var c=ac();if(!c)return;var t=c.currentTime+.02;
+  if(kind==='shuffle'){for(var i=0;i<5;i++)noise(t+i*.085,.12,.15,1400+i*320)}
+  else if(kind==='flip'){noise(t,.24,.2,2200);tone(520,t+.03,.2,.11,'triangle');tone(880,t+.09,.3,.085,'sine')}
+  else if(kind==='reveal'){[523.25,659.25,783.99,1046.5].forEach(function(f,i){tone(f,t+i*.11,.75,.16,'sine')});noise(t,.45,.075,4200)}
+  else if(kind==='tap'){tone(880,t,.08,.07,'sine')}
+  else if(kind==='save'){[659.25,880].forEach(function(f,i){tone(f,t+i*.1,.35,.12,'sine')})}
 }
 
 /* ---------- 视觉 ---------- */
@@ -420,7 +433,7 @@ function viewMe(){
       '<button class="btn ghost small" data-act="bg-clear">移除背景图</button>':'<p class="hint" style="text-align:left;margin:10px 0 0">当前使用主题自带背景</p>')+'</div>'+
     '<div class="sec"><h2>名字与抽牌</h2></div><div class="card">'+
     '<div class="field"><label>应用标题</label><input type="text" data-set="title" value="'+esc(s.title||'')+'" maxlength="12"></div>'+
-    '<div class="setrow"><div class="l"><b>翻牌音效</b><small>洗牌、翻牌、揭晓三种合成音</small></div><div class="switch '+(s.sound?'on':'')+'" data-act="toggle" data-key="sound"></div></div>'+
+    '<div class="setrow"><div class="l"><b>翻牌音效</b><small>洗牌、翻牌、揭晓三种合成音 · 点 ▶ 试听</small></div><div style="display:flex;align-items:center;gap:8px;flex:none"><button class="iconbtn on" data-act="sfx-test" title="试听音效">▶</button><div class="switch '+(s.sound?'on':'')+'" data-act="toggle" data-key="sound"></div></div></div>'+
     '<div class="setrow"><div class="l"><b>每次摆几张牌</b></div><select data-set="cardCount">'+[3,4,5].map(function(n){return '<option value="'+n+'" '+(+s.cardCount===n?'selected':'')+'>'+n+' 张</option>'}).join('')+'</select></div>'+
     '<div class="setrow"><div class="l"><b>避开最近吃过的</b><small>优先抽没吃过的，全吃过时才放回</small></div><div class="switch '+(s.avoidRecent?'on':'')+'" data-act="toggle" data-key="avoidRecent"></div></div>'+
     '<div class="setrow"><div class="l"><b>回避天数</b></div><select data-set="avoidDays">'+[2,3,5,7].map(function(n){return '<option value="'+n+'" '+(+s.avoidDays===n?'selected':'')+'>'+n+' 天内</option>'}).join('')+'</select></div></div>'+
@@ -527,7 +540,7 @@ function importData(file){
 document.addEventListener('click',function(ev){
   var el=ev.target.closest('[data-act]');if(!el)return;
   var act=el.dataset.act,id=el.dataset.id,v=el.dataset.val,dim=el.dataset.dim;
-  if(act!=='sheet-close'&&act!=='answer')sfx('tap');
+  if(act!=='sheet-close'&&act!=='answer'&&act!=='sfx-test')sfx('tap');
   switch(act){
     case 'tab':state.tab=v;state.phase=state.tab==='draw'?state.phase:'idle';render();break;
     case 'answer':S.answers[dim]=v;save();sfx('tap');render();break;
@@ -539,7 +552,7 @@ document.addEventListener('click',function(ev){
     case 'flip':
       if(state.phase!=='dealing')break;
       sfx('flip');el.classList.add('is-flipped');state.picked=id;
-      setTimeout(function(){state.phase='revealed';render();sfx('reveal')},700);
+      setTimeout(function(){state.phase='revealed';render();sfx('reveal')},1500);
       break;
     case 'draw-again':startDraw();break;
     case 'draw-reset':state.phase='idle';state.picked=null;render();break;
@@ -577,6 +590,10 @@ document.addEventListener('click',function(ev){
     case 'bg-pick':document.getElementById('file-bg').click();break;
     case 'bg-clear':S.settings.bgImage=null;save();render();toast('已恢复主题背景');break;
     case 'toggle':S.settings[el.dataset.key]=!S.settings[el.dataset.key];save();render();break;
+    case 'sfx-test':
+      var wasOn=S.settings.sound;S.settings.sound=true;
+      sfx('flip');setTimeout(function(){sfx('reveal');S.settings.sound=wasOn},900);
+      toast('听得到吗？听不到请查手机媒体音量 / 静音键');break;
     case 'export':exportData();break;
     case 'import':document.getElementById('file-import').click();break;
     case 'reset-ask':
